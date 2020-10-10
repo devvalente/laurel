@@ -1,0 +1,3 @@
+route_home:
+    ruta: /home
+    controller: HomeController:index

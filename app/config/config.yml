@@ -1,0 +1,17 @@
+#Aquí van los datos de conexión para la base de datos
+database:
+    driver:
+    host:
+    port:
+    name:
+    user:
+    pass:
+
+#Datos para la conexión con servicio de email.
+email:
+    transport:
+    host:
+    port:
+    encrypt:
+    user:
+    pass: 

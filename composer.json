@@ -1,4 +1,14 @@
 {
+	"name": "laurel",
+    "description": "Micro Framework in development phase. Property of WallerTechnolgy. Developers: León Valente and Sergio Vergara. ",
+    "type": "framework",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "León Valente",
+            "email": "valenleo313@gmail.com"
+        }
+    ],	
 	"require":{
 		
 		"doctrine/orm" : "^2.5",		

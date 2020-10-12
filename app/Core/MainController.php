@@ -11,10 +11,14 @@ namespace app\Core;
 		}
 
 		## ------------- METODO WORKIN VIEW TWIG ------------- ##
-		public function render($pathView, $array){
+		public function render($pathView, $array){			
 			//Procesar la data
-			$data = explode(":", $pathView);
-			$loader = new \Twig\Loader\FilesystemLoader($data[0]);
+			$data = explode(":", $pathView);			
+			$loader = new \Twig\Loader\FilesystemLoader("src/Views/".$data[0]);
+			##  Aquí se añade el path de la ruta y el nombre del namespace para twig:
+			##  Para más información: https://twig.symfony.com/doc/3.x/api.html
+			$loader->addPath('app/Resources/Views', 'base');
+			##  <-----  ##
 			$twig = new \Twig\Environment($loader);
 			echo $twig->render($data[1], $array);
 		}

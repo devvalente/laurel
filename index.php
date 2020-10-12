@@ -11,8 +11,15 @@ require './app/Core/autoload.php';
 		$method 	 = $router->getMethod();
 		$param 		 = $router->getParams();			
 	
-		require "$controlador.php";
-
+		//Verificar si el controlador existe:
+		if( file_exists("$controlador.php") ){
+			require "$controlador.php";	
+		}else{
+			echo "No existe el controlador. <br>";
+			die();
+		}
+		
+		
 		$cont = new $controlador();
 			$cont->$method($param);
 

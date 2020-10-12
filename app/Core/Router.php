@@ -2,6 +2,7 @@
 namespace app\Core;
 
 use Symfony\Component\Yaml\Yaml;
+use app\Core\MessageError;
 	
 	class Router{
 		public $routeController;
@@ -26,7 +27,7 @@ use Symfony\Component\Yaml\Yaml;
 		}
 
 		public function setController($controller){			
-			//$this->controller = $controller;
+			##  $this->controller = $controller;  ##
 			$this->controller = 'src\\'.$this->directorioController."\\".$controller."Controller";
 		}
 
@@ -67,14 +68,14 @@ use Symfony\Component\Yaml\Yaml;
 
 
 		public function compareRoutes($uri){			
-			//Comparar uri con ruta del routing.yml			
+			##  Comparar uri con ruta del routing.yml  ##
 
-			//Eliminar último caracter si es un slash "/"			
+			##  Eliminar último caracter si es un slash "/"  ##
 			if($uri[(strlen($uri)-1)] === "/"){
 				$uri = substr($uri, 0, (strlen($uri)-1) );
 			}
 
-			//Eliminar indice 0 y 1 del uri :carpetaRaiz: para quedarnos con la ruta siguiente
+			##  Eliminar indice 0 y 1 del uri :carpetaRaiz: para quedarnos con la ruta siguiente  ##
 			for($i=0; $i<2; $i++){
 				$strPos = strPos($uri, '/');
 				if($i==0){
@@ -82,74 +83,138 @@ use Symfony\Component\Yaml\Yaml;
 				}else{
 					$uri = substr($uri, $strPos, strlen($uri));
 				}
-				//echo $i." ".$uri."<br>";				
+				##  echo $i." ".$uri."<br>";  ##
 			}
 			
-			//Ubicar yml
+			##  Ubicar yml  ##
 			$routing = Yaml::parseFile('src/Routes/routing.yml');
-			//Recorrer yml
-			foreach ($routing as $keyRouting => $valueRouting) {
-				//echo "Ruta: ".$keyRouting."<br>";	
-				$arrayUri = explode("/", $uri);
-				$arrayValueRouting = explode("/", $valueRouting['ruta']);
-				if(count($arrayUri) === count($arrayValueRouting)){
-					for($i=0; $i<count($arrayUri); $i++){
-						if($arrayUri[$i] === $arrayValueRouting[$i]){
-							$controlador = $valueRouting['controller'];	
-							$correcto = true;
-							//echo "bien <br>";
-						}else{
-							if($i == (count($arrayUri)-1)){															
-								$param = $arrayUri[$i];	
-								//echo "Bien <br>";								
-							}else{
-								echo "Rout not found. <br>";
-								$correcto = false;
-								break;
-							}														
+
+			##  Contador para routing  ##
+			$contR = 1;
+
+			##  Para control  ##
+			$correcto = false;
+			$param = null;
+
+			##  Para cortar proceso foreach :: si finalizarForeach entonces se corta, sino, se sigue  ##
+			$finalizarForeach = false;
+
+			##  Array con la url  ##
+			$arrayUri    = explode("/", $uri);
+
+			##  Recorrer array  ##
+			foreach ($routing as $keys => $routes) {				
+				//echo "<strong>Ruta: $keys <br></strong>";
+				##  Saber si la ruta recibe parametros:  ##
+				$contParam = stripos($routes['ruta'], "{") ? "true": "false";
+				##  Desglosar el array routes  ##
+				$arrayRoutes = explode("/", $routes['ruta']); 
+
+				##  Verificar si los primeros indices coinciden  ##
+					##  Para los que contienen params  ##
+					if($contParam === 'true'){						
+						//echo "Contiene parametros <br>";
+						##  Si contiene parametros puede la uri se igual o menor que la ruta, pero no mayor  ##
+						##  Si contiene los mismos elementos (parametros) la url que la route ##
+						if( (count($arrayUri))===(count($arrayRoutes)) ){
+							//echo "Contienen la misma cantidad de elementos. <br>";
+							//echo "$keys <br>";
+							for($i=0; $i<count($arrayUri); $i++){
+								## Si los indices son iguales mientras no sea el último ##
+								if( ($arrayUri[$i])===($arrayRoutes[$i]) && ($i < (count($arrayRoutes)-1)) ){
+									$correcto = true;
+									$param = $arrayUri[count($arrayUri)-1];
+									//echo $arrayUri[$i].":".$arrayRoutes[$i]."<br>";
+								##  Si los indices son diferentes antes del ultimo  ##
+								}elseif( ($arrayUri[$i])!==($arrayRoutes[$i]) && ($i < (count($arrayRoutes)-1)) ){
+									$correcto = false;									
+									//echo $arrayUri[$i].":".$arrayRoutes[$i]."<br>";
+								}								
+								//echo "Correcto: $correcto <br>";
+							}							
+							## Decirle que es la ruta correcta y enviarla ##
+							if($correcto){ $finalizarForeach=true; $ruta=$keys; }
+						## Si la url contiene en elemento menos:: parametro por definicion automatica ##
+						}elseif( (count($arrayUri))===(count($arrayRoutes)-1) ){
+							//echo "Contienen un elemento menos. <br>";
+							//echo "$keys <br>";
+							for($i=0; $i<(count($arrayUri)); $i++){								
+								## Si los indices son iguales :: aquí no aplica para el ultimo como en el caso anterior ##
+								if( ($arrayUri[$i])===($arrayRoutes[$i]) ){
+									//echo $arrayUri[$i];
+									$correcto = true;									
+								}else{		
+									//echo $arrayUri[$i];							
+									$correcto = 0;
+									break;									
+								}								
+							}
+							//echo "Correcto: $correcto <br>";
+							## Decirle que es la ruta correcta y enviarla ##
+							if($correcto){ $finalizarForeach=true; $ruta=$keys; }								
 						}
 					}
-				}else{
-					echo "Route not found. <br>";
-					echo "Verifique el routing yml para <strong>'$keyRouting'</strong><br>";
-					echo "No coinciden las rutas. Cantidad de parámetros.";
-					$correcto = false;
+					##  Para los que no contienen parametros  ##
+					elseif($contParam === 'false'){
+						//echo "No contiene parametros <br>";
+						##  Si no contiene parametros debe tener los mismos elementos  ##
+						if( (count($arrayUri))===(count($arrayRoutes)) ){
+							//echo "Contienen la misma cantidad de elementos. <br>";
+							##  Recorrer arrays para revisarlos  ##
+							for($i=0; $i<count($arrayRoutes); $i++){
+								if( ($arrayUri[$i])===($arrayRoutes[$i]) ){
+									$correcto = true;
+								}else{
+									$correcto = false;
+								}
+							}							
+							## Decirle que es la ruta correcta y enviarla ##
+							if($correcto){ $finalizarForeach=true; $ruta=$keys; }
+						}elseif( (count($arrayUri))>(count($arrayRoutes)) ){
+							$correcto = false;							
+						}
+					}
+
+				##  Cortar foreach  ##
+				if($finalizarForeach){
+					//echo "<h2>Ruta encontrada:</h2>";
+					//echo "Ruta encontrada: $keys <br>";
 					break;
+				}else{
+					if($contR === (count($routing))){
+						$messageError = new MessageError();
+							$mensaje = [];
+								$mensaje[]="Ruta no encontrada.";
+								$mensaje[]="Ruta: $uri.";
+							$messageError->setTipoMessage("Error en Ruta.");
+							$messageError->setClassMessage("Fatal Error.");
+							$messageError->setMessageError($mensaje);								
+							$messageError->showMessage();
+						die();
+					}
 				}
+				$contR++;
 			}
 
-			
-			//Setear los valores
-			if($correcto){
-				//Separar datos obtenidos del controlador
-					if($controlador){
-						$data = explode(":", $controlador);			
-							$directorioController = $data[0];
-							$controller 		 = $data[1];
-							$method     		 = $data[2];	
-					}			
-
-				$this->setDirectorioController($directorioController);			
-				$this->setController($controller);
-				$this->setMethod($method);
-				$this->setParams($param);	
-			}
-			
-			
+			$data = explode(":", $routing[$keys]['controller']);	
+			$data[]=$param;			
+				self::setDirectorioController($data[0]);
+				self::setController($data[1]);
+				self::setMethod($data[2]);
+				self::setParams($data[3]);
 				
-			
-			/*
-			echo "Directorio: $directorioController <br>";
-			echo "Controller: $controller <br>";
-			echo "Method: $method <br>";
-			echo "Param: $param <br>";
+			//self::debug($arrayUri, "URL");
+			//self::debug($routing, "Routing");
+			//self::debug($data, "Data");
+			//die();
+		}
 
-			/*
-			echo "<br><br><br>";
-			var_dump($arrayUri);
-			var_dump($arrayValueRouting);
-			*/
-
+		public function debug($data, $title){			
+			echo "<h3>Debbug para: $title </h3>";
+			echo "<pre>";
+				var_dump($data);
+			echo "</pre>";
+			echo "<br>";
 		}
 	}
 
